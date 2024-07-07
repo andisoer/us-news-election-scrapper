@@ -48,6 +48,9 @@ merged_us_news = merge_news(us_news, existing_us_news)
 
 sorted_merged_us_news = sorted(merged_us_news, key=lambda x:datetime.strptime(x['published date'], '%a, %d %b %Y %H:%M:%S %Z'), reverse=True)
 
+for news in sorted_merged_us_news:
+    news['published_date'] = news.pop("published date")
+
 # Convert the merged news to us_news.json
 us_news_json = json.dumps(sorted_merged_us_news, indent=4)
 
