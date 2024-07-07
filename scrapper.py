@@ -1,7 +1,9 @@
-from gnews import GNews
-from newspaper import Article, ArticleException
 import json
 import os
+
+from gnews import GNews
+from newspaper import Article, ArticleException
+from datetime import datetime
 
 # Define function to check if item is exist inside a list
 def item_exist(news_item, news_list):
@@ -44,8 +46,10 @@ if os.path.exists(us_news_json_file):
 # Call the merge news function
 merged_us_news = merge_news(us_news, existing_us_news)
 
+sorted_merged_us_news = sorted(merged_us_news, key=lambda x:datetime.strptime(x['published date'], '%a, %d %b %Y %H:%M:%S %Z'), reverse=True)
+
 # Convert the merged news to us_news.json
-us_news_json = json.dumps(merged_us_news, indent=4)
+us_news_json = json.dumps(sorted_merged_us_news, indent=4)
 
 # Write to json
 with open(us_news_json_file, "w") as outfile:
