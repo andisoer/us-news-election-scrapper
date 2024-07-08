@@ -30,8 +30,12 @@ google_news.language = 'English'
 google_news.start_date = (2024, 1, 1)
 google_news.max_results = 20
 
+# Query:
+# United State Election, Joe Biden, Donald Trump
+news_query = "Joe Biden"
+
 # Fetch news using GNews
-us_news = google_news.get_news('United State Election')
+us_news = google_news.get_news(news_query)
 
 # Mapping image_url from newspaper to gnews result
 for news in us_news:
@@ -48,21 +52,27 @@ for news in us_news:
 for news in us_news:
     news['published_date'] = news.pop('published date')
 
-# Read from existing us_news.json
-us_news_json_file = 'us_news.json'
+# Read from existing file name
+# File name
+# 'us_news.json', 'joe_biden_news.json', 'donald_trump.json'
+us_news_json_file = 'joe_biden_news.json'
 if os.path.exists(us_news_json_file):
     with open(us_news_json_file) as file:
         existing_us_news = json.load(file)
+
+# Convert the recently fetched news date format 
+for news in us_news:
+    news['published_date'] = format_published_date(news['published_date'])
 
 # Call the merge news function
 merged_us_news = merge_news(us_news, existing_us_news)
     
 # Sort by date decrement (newest date)
-sorted_merged_us_news = sorted(merged_us_news, key=lambda x:datetime.strptime(x['published_date'], '%a, %d %b %Y %H:%M:%S %Z'), reverse=True)
+sorted_merged_us_news = sorted(merged_us_news, key=lambda x:datetime.strptime(x['published_date'], '%d %B %Y'), reverse=True)
 
 # Change the date format from published_date key
-for news in sorted_merged_us_news:
-    news['published_date'] = format_published_date(news['published_date'])
+# for news in sorted_merged_us_news:
+#     news['published_date'] = format_published_date(news['published_date'])
 
 # Convert the merged news to us_news.json
 us_news_json = json.dumps(sorted_merged_us_news, indent=4)
