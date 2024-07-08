@@ -32,7 +32,7 @@ google_news.max_results = 20
 
 # Query:
 # United State Election, Joe Biden, Donald Trump
-news_query = "Joe Biden"
+news_query = "Donald Trump"
 
 # Fetch news using GNews
 us_news = google_news.get_news(news_query)
@@ -54,8 +54,8 @@ for news in us_news:
 
 # Read from existing file name
 # File name
-# 'us_news.json', 'joe_biden_news.json', 'donald_trump.json'
-us_news_json_file = 'joe_biden_news.json'
+# 'us_news.json', 'joe_biden_news.json', 'donald_trump_news.json'
+us_news_json_file = 'donald_trump_news.json'
 if os.path.exists(us_news_json_file):
     with open(us_news_json_file) as file:
         existing_us_news = json.load(file)
@@ -64,8 +64,12 @@ if os.path.exists(us_news_json_file):
 for news in us_news:
     news['published_date'] = format_published_date(news['published_date'])
 
-# Call the merge news function
-merged_us_news = merge_news(us_news, existing_us_news)
+# Call the merge news function if existing news exist
+if os.path.exists(us_news_json_file):
+    merged_us_news = merge_news(us_news, existing_us_news)
+else:
+    merged_us_news = us_news
+
     
 # Sort by date decrement (newest date)
 sorted_merged_us_news = sorted(merged_us_news, key=lambda x:datetime.strptime(x['published_date'], '%d %B %Y'), reverse=True)
