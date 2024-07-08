@@ -16,6 +16,13 @@ def merge_news(news_list, existing_news_list):
             existing_news_list.append(news)
     return existing_news_list
 
+# Function to convert date format
+def format_published_date(date_str):
+    # Parse the date string into a datetime object
+    date_obj = datetime.strptime(date_str, '%a, %d %b %Y %H:%M:%S %Z')
+    # Format the datetime object to desired format
+    return date_obj.strftime('%d %B %Y')
+
 # Config GNews
 google_news = GNews()
 google_news.country = 'United States'
@@ -37,6 +44,10 @@ for news in us_news:
         print('failed to download from', news['url'])
         continue
 
+# Change the published date key name to published_date
+for news in us_news:
+    news['published_date'] = news.pop('published date')
+
 # Read from existing us_news.json
 us_news_json_file = 'us_news.json'
 if os.path.exists(us_news_json_file):
@@ -45,11 +56,13 @@ if os.path.exists(us_news_json_file):
 
 # Call the merge news function
 merged_us_news = merge_news(us_news, existing_us_news)
+    
+# Sort by date decrement (newest date)
+sorted_merged_us_news = sorted(merged_us_news, key=lambda x:datetime.strptime(x['published_date'], '%a, %d %b %Y %H:%M:%S %Z'), reverse=True)
 
-sorted_merged_us_news = sorted(merged_us_news, key=lambda x:datetime.strptime(x['published date'], '%a, %d %b %Y %H:%M:%S %Z'), reverse=True)
-
+# Change the date format from published_date key
 for news in sorted_merged_us_news:
-    news['published_date'] = news.pop("published date")
+    news['published_date'] = format_published_date(news['published_date'])
 
 # Convert the merged news to us_news.json
 us_news_json = json.dumps(sorted_merged_us_news, indent=4)
