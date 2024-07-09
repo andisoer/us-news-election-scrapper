@@ -32,7 +32,7 @@ google_news.max_results = 20
 
 # Query:
 # United State Election, Joe Biden, Donald Trump
-news_query = "Donald Trump"
+news_query = "United State Election"
 
 # Fetch news using GNews
 us_news = google_news.get_news(news_query)
@@ -44,6 +44,7 @@ for news in us_news:
         article.download()
         article.parse()
         news['image_url'] = article.top_image
+        news['authors'] = article.authors
     except ArticleException:
         print('failed to download from', news['url'])
         continue
@@ -55,7 +56,7 @@ for news in us_news:
 # Read from existing file name
 # File name
 # 'us_news.json', 'joe_biden_news.json', 'donald_trump_news.json'
-us_news_json_file = 'donald_trump_news.json'
+us_news_json_file = 'us_news.json'
 if os.path.exists(us_news_json_file):
     with open(us_news_json_file) as file:
         existing_us_news = json.load(file)
