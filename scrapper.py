@@ -1,9 +1,12 @@
 import json
 import os
+import re
+import base64
 
 from gnews import GNews
 from newspaper import Article, ArticleException
 from datetime import datetime
+from urllib.parse import urlparse
 
 # Define function to check if item is exist inside a list
 def item_exist(news_item, news_list):
@@ -23,6 +26,37 @@ def format_published_date(date_str):
     # Format the datetime object to desired format
     return date_obj.strftime('%d %B %Y')
 
+def decode_google_news_url(source_url):
+    url = urlparse(source_url)
+    path = url.path.split('/')
+    if (
+        url.hostname == "news.google.com" and
+        len(path) > 1 and
+        path[len(path) - 2] == "articles"
+    ):
+        base64_str = path[len(path) - 1]
+        decoded_bytes = base64.urlsafe_b64decode(base64_str + '==')
+        decoded_str = decoded_bytes.decode('latin1')
+
+        prefix = bytes([0x08, 0x13, 0x22]).decode('latin1')
+        if decoded_str.startswith(prefix):
+            decoded_str = decoded_str[len(prefix):]
+
+        suffix = bytes([0xd2, 0x01, 0x00]).decode('latin1')
+        if decoded_str.endswith(suffix):
+            decoded_str = decoded_str[:-len(suffix)]
+
+        bytes_array = bytearray(decoded_str, 'latin1')
+        length = bytes_array[0]
+        if length >= 0x80:
+            decoded_str = decoded_str[2:length+1]
+        else:
+            decoded_str = decoded_str[1:length+1]
+
+        return decoded_str
+    else:
+        return source_url
+
 # Config GNews
 google_news = GNews()
 google_news.country = 'United States'
@@ -39,12 +73,14 @@ us_news = google_news.get_news(news_query)
 
 # Mapping image_url from newspaper to gnews result
 for news in us_news:
-    article = Article(news['url'])
+    real_url = decode_google_news_url(news['url'])
+    article = Article(real_url)
     try:
         article.download()
         article.parse()
         news['image_url'] = article.top_image
         news['authors'] = article.authors
+        news['real_url'] = real_url
     except ArticleException:
         print('failed to download from', news['url'])
         continue
