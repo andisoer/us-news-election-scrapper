@@ -1,0 +1,22 @@
+[
+    {
+        "id": 1,
+        "query": "US Election",
+        "file_name": "us_news.json"
+    },
+    {
+        "id": 2,
+        "query": "Kamala Harris",
+        "file_name": "kamala_harris_news.json"
+    },
+    {
+        "id": 3,
+        "query": "Donald Trump",
+        "file_name": "donald_trump_news.json"
+    },
+    {
+        "id": 4,
+        "query": "Joe Biden",
+        "file_name": "joe_biden_news.json"
+    }
+]

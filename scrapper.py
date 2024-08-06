@@ -56,6 +56,58 @@ def decode_google_news_url(source_url):
         return decoded_str
     else:
         return source_url
+    
+def scrap_news(query, file_name):
+    # Fetch news using GNews
+    us_news = google_news.get_news(query)
+
+    # Mapping image_url from newspaper to gnews result
+    for news in us_news:
+        real_url = decode_google_news_url(news['url'])
+        article = Article(real_url)
+        try:
+            article.download()
+            article.parse()
+            news['image_url'] = article.top_image
+            news['authors'] = article.authors
+            news['real_url'] = real_url
+        except ArticleException:
+            print('failed to download from', news['url'])
+            continue
+
+    # Change the published date key name to published_date
+    for news in us_news:
+        news['published_date'] = news.pop('published date')
+
+    # Read from existing file name
+    if os.path.exists(file_name):
+        with open(file_name) as file:
+            existing_us_news = json.load(file)
+
+    # Convert the recently fetched news date format 
+    for news in us_news:
+        news['published_date'] = format_published_date(news['published_date'])
+
+    # Call the merge news function if existing news exist
+    if os.path.exists(file_name):
+        merged_us_news = merge_news(us_news, existing_us_news)
+    else:
+        merged_us_news = us_news
+
+        
+    # Sort by date decrement (newest date)
+    sorted_merged_us_news = sorted(merged_us_news, key=lambda x:datetime.strptime(x['published_date'], '%d %B %Y'), reverse=True)
+
+    # Change the date format from published_date key
+    # for news in sorted_merged_us_news:
+    #     news['published_date'] = format_published_date(news['published_date'])
+
+    # Convert the merged news to us_news.json
+    us_news_json = json.dumps(sorted_merged_us_news, indent=4)
+
+    # Write to json
+    with open(file_name, "w") as outfile:
+        outfile.write(us_news_json)
 
 # Config GNews
 google_news = GNews()
@@ -64,61 +116,11 @@ google_news.language = 'English'
 google_news.start_date = (2024, 1, 1)
 google_news.max_results = 20
 
-# Query:
-# United State Election, Joe Biden, Donald Trump
-news_query = "United State Election"
+election_candidate_file = 'election_candidate.json'
+if os.path.exists(election_candidate_file):
+    with open(election_candidate_file) as file:
+        election_candidates = json.load(file)
 
-# Fetch news using GNews
-us_news = google_news.get_news(news_query)
-
-# Mapping image_url from newspaper to gnews result
-for news in us_news:
-    real_url = decode_google_news_url(news['url'])
-    article = Article(real_url)
-    try:
-        article.download()
-        article.parse()
-        news['image_url'] = article.top_image
-        news['authors'] = article.authors
-        news['real_url'] = real_url
-    except ArticleException:
-        print('failed to download from', news['url'])
-        continue
-
-# Change the published date key name to published_date
-for news in us_news:
-    news['published_date'] = news.pop('published date')
-
-# Read from existing file name
-# File name
-# 'us_news.json', 'joe_biden_news.json', 'donald_trump_news.json'
-us_news_json_file = 'us_news.json'
-if os.path.exists(us_news_json_file):
-    with open(us_news_json_file) as file:
-        existing_us_news = json.load(file)
-
-# Convert the recently fetched news date format 
-for news in us_news:
-    news['published_date'] = format_published_date(news['published_date'])
-
-# Call the merge news function if existing news exist
-if os.path.exists(us_news_json_file):
-    merged_us_news = merge_news(us_news, existing_us_news)
-else:
-    merged_us_news = us_news
-
-    
-# Sort by date decrement (newest date)
-sorted_merged_us_news = sorted(merged_us_news, key=lambda x:datetime.strptime(x['published_date'], '%d %B %Y'), reverse=True)
-
-# Change the date format from published_date key
-# for news in sorted_merged_us_news:
-#     news['published_date'] = format_published_date(news['published_date'])
-
-# Convert the merged news to us_news.json
-us_news_json = json.dumps(sorted_merged_us_news, indent=4)
-
-# Write to json
-with open(us_news_json_file, "w") as outfile:
-    outfile.write(us_news_json)
-
+        for candidate in election_candidates:
+            print("====== Fetching ", candidate['query'], " ======")
+            scrap_news(candidate["query"], candidate["file_name"])
