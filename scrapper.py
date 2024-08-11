@@ -7,6 +7,8 @@ from gnews import GNews
 from newspaper import Article, ArticleException
 from datetime import datetime
 from urllib.parse import urlparse
+from splinter import Browser
+from time import sleep
 
 # Define function to check if item is exist inside a list
 def item_exist(news_item, news_list):
@@ -63,14 +65,22 @@ def scrap_news(query, file_name):
 
     # Mapping image_url from newspaper to gnews result
     for news in us_news:
-        real_url = decode_google_news_url(news['url'])
-        article = Article(real_url)
+        browser = Browser("firefox")
+        browser.visit(news["url"])
+        
+        sleep(5)
+        url = browser.url
+
+        browser.quit()
+
+        # real_url = decode_google_news_url(news['url'])
+        article = Article(url)
         try:
             article.download()
             article.parse()
             news['image_url'] = article.top_image
             news['authors'] = article.authors
-            news['real_url'] = real_url
+            news['real_url'] = url
         except ArticleException:
             print('failed to download from', news['url'])
             continue
@@ -115,6 +125,7 @@ google_news.country = 'United States'
 google_news.language = 'English'
 google_news.start_date = (2024, 1, 1)
 google_news.max_results = 20
+
 
 election_candidate_file = 'election_candidate.json'
 if os.path.exists(election_candidate_file):
