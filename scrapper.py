@@ -50,6 +50,7 @@ def scrap_news(query, file_name):
             news['image_url'] = article.top_image
             news['authors'] = article.authors
             news['real_url'] = url
+            news['text'] = article.text
         except ArticleException:
             print('failed to download from', news['url'])
             continue
